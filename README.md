@@ -1,1 +1,2 @@
-# winogradconv
+TODO:
+ - [ ] winograd convolution implementation
