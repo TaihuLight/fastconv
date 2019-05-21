@@ -1,0 +1,89 @@
+# 2d plane 2d winograd
+
+import numpy as np
+from scipy.signal import correlate2d
+
+# calculate U = GgG'
+def transform_kernel(g):
+  G = np.array([[1, 0, 0],
+                [0.5, 0.5, 0.5],
+                [0.5, -0.5, 0.5],
+                [0, 0, 1]])
+  return G@g@G.T
+
+# calculate V = B'dB
+def tansform_pixel_tile(d):
+  """ matrix multiply
+  BT = np.array([[1,0,-1,0],
+                 [0,1,1,0],
+                 [0,-1,1,0],
+                 [0,1,0,-1]])
+  return BT@d@BT.T
+  """
+  x = np.zeros([4, 4])
+
+  for i in range(4):
+    x[0, i] = d[0, i] - d[2, i]
+    x[1, i] = d[1, i] + d[2, i]
+    x[2, i] = d[2, i] - d[1, i]
+    x[3, i] = d[1, i] - d[3, i]
+  
+  V = np.zeros([4, 4])
+  for i in range(4):
+    V[i, 0] = x[i, 0] - x[i, 2]
+    V[i, 1] = x[i, 1] + x[i, 2]
+    V[i, 2] = x[i, 2] - x[i, 1]
+    V[i, 3] = x[i, 1] - x[i, 3]    
+  
+  return V
+
+
+#winograd 2d plane convolution, no padding
+def winograd_2dconv_F2x2_3x3(img, kernel):
+  (H, W) = img.shape
+  (S, R) = kernel.shape
+
+  U = transform_kernel(kernel)
+
+  AT = np.array([[1, 1, 1, 0],
+                 [0, 1, -1, -1]])
+  A = AT.T
+  
+  LX = W - R + 1
+  LY = H - S + 1
+  
+  out = np.zeros([LY, LX])
+  
+  RX = LX % 2
+  RY = LY % 2  
+  
+  for ytile in range(LY//2):
+    for xtile in range(LX//2):
+      d = img[2*ytile:2*ytile+4, 2*xtile:2*xtile+4]
+      V = tansform_pixel_tile(d)
+      out[2*ytile:2*ytile+2, 2*xtile:2*xtile+2] = AT@(U*V)@A
+      
+  return out
+
+if __name__ == "__main__":
+
+  N = 8
+  img = np.linspace(1, N*N, num=N*N).reshape(N, N)
+  kernel = np.linspace(1, 3*3, num=9).reshape(3,3)
+
+  res_native = correlate2d(img, kernel, mode='valid')
+  res_winograd = winograd_2dconv_F2x2_3x3(img, kernel)
+
+  #"""
+  print("native convolution")
+  print(res_native)
+  print("")
+  print("winograd convolution")
+  print(res_winograd)
+  print("")
+ #"""
+
+  if np.array_equal(res_native, res_winograd):
+    print("check OK!")
+  else:
+    print("check wrong!")
