@@ -45,9 +45,11 @@ def winograd_2dconv_F2x2_3x3(img, kernel):
 
   U = transform_kernel(kernel)
 
+  """
   AT = np.array([[1, 1, 1, 0],
                  [0, 1, -1, -1]])
   A = AT.T
+  """
   
   LX = W - R + 1
   LY = H - S + 1
@@ -55,13 +57,23 @@ def winograd_2dconv_F2x2_3x3(img, kernel):
   out = np.zeros([LY, LX])
   
   RX = LX % 2
-  RY = LY % 2  
+  RY = LY % 2
+  t = np.zeros([2, 4])
   
   for ytile in range(LY//2):
     for xtile in range(LX//2):
       d = img[2*ytile:2*ytile+4, 2*xtile:2*xtile+4]
       V = tansform_pixel_tile(d)
-      out[2*ytile:2*ytile+2, 2*xtile:2*xtile+2] = AT@(U*V)@A
+      
+      V = U*V      
+      for i in range(4):
+        t[0, i] = V[0, i] + V[1, i] + V[2, i]
+        t[1, i] = V[1, i] - V[2, i] - V[3, i]
+      
+      out[2*ytile:2*ytile+2, 2*xtile:2*xtile+2] = np.array([
+          [t[0,0] + t[0,1] + t[0,2], t[0,1] - t[0,2] - t[0,3] ],
+          [t[1,0] + t[1,1] + t[1,2], t[1,1] - t[1,2] - t[1,3] ] ])
+      #out[2*ytile:2*ytile+2, 2*xtile:2*xtile+2] = AT@(U*V)@A
       
   return out
 
@@ -81,7 +93,7 @@ if __name__ == "__main__":
   print("winograd convolution")
   print(res_winograd)
   print("")
- #"""
+  #"""
 
   if np.array_equal(res_native, res_winograd):
     print("check OK!")
