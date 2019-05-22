@@ -80,8 +80,8 @@ def winograd_2dconv_F2x2_3x3(img, kernel):
 if __name__ == "__main__":
 
   N = 8
-  img = np.linspace(1, N*N, num=N*N).reshape(N, N)
-  kernel = np.linspace(1, 3*3, num=9).reshape(3,3)
+  img = np.random.rand(N, N)
+  kernel =  np.random.rand(3,3)
 
   res_native = correlate2d(img, kernel, mode='valid')
   res_winograd = winograd_2dconv_F2x2_3x3(img, kernel)
@@ -95,7 +95,7 @@ if __name__ == "__main__":
   print("")
   #"""
 
-  if np.array_equal(res_native, res_winograd):
+  if np.max(np.abs(res_native - res_winograd)) < 1e-4 :
     print("check OK!")
   else:
     print("check wrong!")

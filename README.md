@@ -1,5 +1,6 @@
 # winograd convolution implementation
 
-TODO:
+implement:
  - [x] 2d plane winograd convolution
- - [ ] 2d  winograd general convolution
+ - [x] 2d  winograd general convolution
+
