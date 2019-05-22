@@ -1,3 +1,5 @@
+[中文版本](README_CN.md)
+
 # winograd convolution implementation
 
 implement:
